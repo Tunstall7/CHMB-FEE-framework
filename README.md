@@ -69,58 +69,88 @@ NaN interpolation: Missing values are filled via `interp1(..., 'spline')` so tha
 
 - **Rolling Forecast**: A post-validation rolling forecast is produced using `timeseries_process1_Pre` on the tail of the training data. All predicted time steps are retained in the output matrix `Yhat_fwd [steps × outputs]`.
 
-## IV. Integration with CHMB for NbS Optimization (CHMB-Borg)
+## V. CHMB-Borg (for NbS optimization)
+
+### (i) The usage instructions for Borg in MATLAB
+
+- **Request Access**
+  - Visit [http://borgmoea.org/](http://borgmoea.org/)
+  - Fill out the registration form in the red-bordered area
+  - Check your email (including spam folder) for the invitation link within 3 business days
+  - Click the link in the email to accept the invitation
+
+- **Download Source Code**
+  - Download `BorgMOEA-master.zip` from the GitHub repository: [https://github.com/BorgMOEA/BorgMOEA](https://github.com/BorgMOEA/BorgMOEA)
+
+- **Configure C/C++ Compiler**
+  - In MATLAB Command Window, run:
+    ```matlab
+    mex -setup
+    ```
+  - **If no compiler is configured:**
+    - Download MinGW-w64 compatible with your MATLAB version from [MathWorks](https://ww2.mathworks.cn/support/requirements/previous-releases.html)
+    - Follow the installation prompts
+  - **If prompted to select a language, choose C++:**
+    - `mex -setup C++`
+
+- **Compile Borg**
+  - Navigate to the extracted `BorgMOEA-master` folder containing these files:
+    - `borg.c`
+    - `borg.h`
+    - `mt19937ar.c`
+    - `mt19937ar.h`
+    - `nativeborg.cpp`
+  - Run the compilation command:
+    ```matlab
+    mex nativeborg.cpp borg.c mt19937ar.c
+    ```
+  - **Success indicator:** Message displaying *"MEX completed successfully"* using *'MinGW64 Compiler (C++)'*.
+
+### (ii) Integration with CHMB for NbS Optimization (CHMB-Borg)
 
 Once successfully integrated, you can combine **Borg MOEA** with the **CHMB model** to optimize **Nature-based Solutions (NbS)**. This enables:
 
-### (i) Key Features
-- **Multi-objective Optimization**: Handles conflicting objectives (e.g., ecological benefits vs. economic costs) without requiring a priori weighting.  
-- **Adaptive Search Strategy**: BORG's auto-adaptive operator selection dynamically switches between GA, DE, SPX, PCX, and UM operators based on problem characteristics.  
-- **Epsilon-box Dominance Archive**: Maintains diverse Pareto-optimal solutions with controlled precision.  
-- **Constraint Handling**: Supports both bound constraints and problem-specific constraints for realistic NbS scenarios.
+- **Key Features**
+  - **Multi-objective Optimization**: Handles conflicting objectives (e.g., ecological benefits vs. economic costs) without requiring a priori weighting.
+  - **Adaptive Search Strategy**: BORG's auto-adaptive operator selection dynamically switches between GA, DE, SPX, PCX, and UM operators based on problem characteristics.
+  - **Epsilon-box Dominance Archive**: Maintains diverse Pareto-optimal solutions with controlled precision.
+  - **Constraint Handling**: Supports both bound constraints and problem-specific constraints for realistic NbS scenarios.
 
-### (ii) Prerequisites
-- MATLAB R2018b or later.  
-- BORG MOEA library (compiled MEX files for your platform).  
-- CHMB model interface functions.
+- **Prerequisites**
+  - MATLAB R2018b or later
+  - BORG MOEA library (compiled MEX files for your platform)
+  - CHMB model interface functions
 
-### (iii) Usage Example
-    ```matlab
-    clear; close all; clc;
-
-    %% 1. Problem Setup
-    % Load CHMB scenario parameters
-    config = loadCHMBConfig('scenario_2050_baseline');
-
-    % Define decision variables (NbS intervention intensities)
-    % Example: [reforestation_area, wetland_restoration, urban_greening, 
-    %           sustainable_agriculture, forest_management, coastal_protection]
-    numVars = 6;
-    numObjs = 3;
-    numConstr = 2; 
-
-    %% 2. Bounds Definition
-    lb = zeros(1, numVars);  % Minimum intervention (0%)
-    ub = config.maxIntervention;  % Maximum feasible intervention per zone
-
-    %% 3. BORG Configuration
-    % Epsilon values control solution granularity (tune based on objective scales)
-    epsilon = [0.5;
-               100;
-               0.01];
-
-    % Algorithm parameters (auto-adaptive ensemble)
-    params = {'population.size', 200, ...
-              'maxEvaluations', 50000, ...
-              'initialization.mode', 'latinHypercube', ...
-              'restart.mode', 'adaptive', ...
-              'feedback.interval', 1000};
-
-    %% 4. Objective Function Wrapper
-    objFunc = @(vars) evaluateCHMB_NbS(vars, config);
-
-    %% 5. Execute Optimization
-    fprintf('Starting CHMB-NbS optimization...\n');
-    [optimalVars, optimalObjs, metadata] = borg(numVars, numObjs, numConstr, ...
-        objFunc, epsilon, lb, ub, params);
-    ```
+- **Usage Example**
+  ```matlab
+  clear; close all; clc;
+  %% 1. Problem Setup
+  % Load CHMB scenario parameters
+  config = loadCHMBConfig('scenario_2050_baseline');
+  % Define decision variables (NbS intervention intensities)
+  % Example: [reforestation_area, wetland_restoration, urban_greening, 
+  %           sustainable_agriculture, forest_management, coastal_protection]
+  numVars = 6;
+  numObjs = 3;
+  numConstr = 2; 
+  %% 2. Bounds Definition
+  lb = zeros(1, numVars);  % Minimum intervention (0%)
+  ub = config.maxIntervention;  % Maximum feasible intervention per zone
+  %% 3. BORG Configuration
+  % Epsilon values control solution granularity (tune based on objective scales)
+  epsilon = [0.5;
+             100;
+             0.01];
+  % Algorithm parameters (auto-adaptive ensemble)
+  params = {'population.size', 200, ...
+            'maxEvaluations', 50000, ...
+            'initialization.mode', 'latinHypercube', ...
+            'restart.mode', 'adaptive', ...
+            'feedback.interval', 1000};
+  %% 4. Objective Function Wrapper
+  objFunc = @(vars) evaluateCHMB_NbS(vars, config);
+  %% 5. Execute Optimization
+  fprintf('Starting CHMB-NbS optimization...\n');
+  [optimalVars, optimalObjs, metadata] = borg(numVars, numObjs, numConstr, ...
+      objFunc, epsilon, lb, ub, params);
+  ```
