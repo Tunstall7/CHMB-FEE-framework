@@ -102,10 +102,10 @@ Data and codes for "A selection framework for nature-based solutions based on hy
     ```matlab
     mex -setup
     ```
-  - **If no compiler is configured:**
+  - If no compiler is configured:
     - Download MinGW-w64 compatible with your MATLAB version from [MathWorks](https://ww2.mathworks.cn/support/requirements/previous-releases.html)
     - Follow the installation prompts
-  - **If prompted to select a language, choose C++:**
+  - If prompted to select a language, choose C++:
     - `mex -setup C++`
 
 - **Compile Borg**
@@ -119,7 +119,7 @@ Data and codes for "A selection framework for nature-based solutions based on hy
     ```matlab
     mex nativeborg.cpp borg.c mt19937ar.c
     ```
-  - **Success indicator:** Message displaying *"MEX completed successfully"* using *'MinGW64 Compiler (C++)'*.
+  - Success indicator: Message displaying *"MEX completed successfully"* using *'MinGW64 Compiler (C++)'*.
 
 ### (ii) Integration with CHMB for NbS Optimization (CHMB-Borg)
 
