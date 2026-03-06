@@ -54,20 +54,35 @@ Data and codes for "A selection framework for nature-based solutions based on hy
 ### (ii) Workflow
   Calling `runModel(par)` triggers the following sequential pipeline:
 
-- **Data Ingestion and Preprocessing**: Column-type detection: The first data row is inspected to classify each column as categorical (character) or numeric. Mixed datasets are supported. Label encoding: Each unique string category is assigned a stable integer index using `unique` + `ismember`, producing a numeric matrix compatible with the network input. 
-NaN interpolation: Missing values are filled via `interp1(..., 'spline')` so that no sample is discarded.
+- **Data Ingestion and Preprocessing**
+  - Column-type detection: The first data row is inspected to classify each column as categorical (character) or numeric.
+  - Mixed datasets are supported. Label encoding: Each unique string category is assigned a stable integer index using `unique` + `ismember`, producing a numeric matrix compatible with the network input.
+  - NaN interpolation: Missing values are filled via `interp1(..., 'spline')` so that no sample is discarded.
 
-- **Feature Engineering**: The interpolated matrix is passed to `timeseries_process1`, which applies a sliding window of length `n_series` and stride 1 to build a 2-D feature matrix `Xf` paired with a target matrix `Yf`. The number of input dimensions equals `n_feat × n_series`; the number of output dimensions is controlled by `cfg.list`.
+- **Feature Engineering**
+  -   The interpolated matrix is passed to `timeseries_process1`, which applies a sliding window of length `n_series` and stride 1 to build a 2-D feature matrix `Xf` paired with a target matrix `Yf`.
+  -   The number of input dimensions equals `n_feat × n_series`; the number of output dimensions is controlled by `cfg.list`.
 
-- **Dataset Partitioning and Normalization**: Samples are split chronologically into train / validation / test according to `cfg.split` ratios (no shuffling, preserving temporal order). Z-score statistics (`mx`, `sx`, `my`, `sy`) are computed exclusively on the training partition and applied to all three splits to prevent data leakage. The normalized matrices are converted to LSTM-compatible sequence cell arrays via the utility function `mat2seq`.
+- **Dataset Partitioning and Normalization**
+  - Samples are split chronologically into train / validation / test according to `cfg.split` ratios (no shuffling, preserving temporal order). Z-score statistics (`mx`, `sx`, `my`, `sy`) are computed exclusively on the training partition and applied to all three splits to prevent data leakage.
+  - The normalized matrices are converted to LSTM-compatible sequence cell arrays via the utility function `mat2seq`.
 
-- **Bayesian Hyperparameter Optimization**: Five hyperparameters are jointly optimized: `NumOfLayer`, `NumOfUnits`, `isUseBiLSTMLayer`, `InitialLearnRate`, `L2Regularization`. The optimizer is given a wall-clock budget of 14 hours and a maximum of `cfg.n_bo` iterations. The best configuration minimizes validation loss. This is handled entirely by `OptimizeBayeLSTMS_and_CNNS1`.
+- **Bayesian Hyperparameter Optimization**
+  - Five hyperparameters are jointly optimized: `NumOfLayer`, `NumOfUnits`, `isUseBiLSTMLayer`, `InitialLearnRate`, `L2Regularization`.
+  - The optimizer is given a wall-clock budget of 14 hours and a maximum of `cfg.n_bo` iterations. The best configuration minimizes validation loss.
+  - This is handled entirely by `OptimizeBayeLSTMS_and_CNNS1`.
 
-- **Model Training**: Once optimal hyperparameters are found, `EvaluationData2` performs the final training run. The convergence history (RMSE and loss per epoch) is plotted automatically. Trained networks are stored in the `nets{s, g}` cell, indexed by decomposition component `s` and output group `g`.
+- **Model Training**
+  - Once optimal hyperparameters are found, `EvaluationData2` performs the final training run. The convergence history (RMSE and loss per epoch) is plotted automatically.
+  - Trained networks are stored in the `nets{s, g}` cell, indexed by decomposition component `s` and output group `g`.
 
-- **Inference and Metric Evaluation**: Predictions on all three partitions are obtained via `predict`, inverse-normalized, and aggregated across decomposition components. The helper `eval_metrics` computes and prints KGE, MAE, RMSE, R², and NSE for each partition.
+- **Inference and Metric Evaluation**
+  - Predictions on all three partitions are obtained via `predict`, inverse-normalized, and aggregated across decomposition components.
+  - The helper `eval_metrics` computes and prints KGE, MAE, RMSE, R², and NSE for each partition.
 
-- **Rolling Forecast**: A post-validation rolling forecast is produced using `timeseries_process1_Pre` on the tail of the training data. All predicted time steps are retained in the output matrix `Yhat_fwd [steps × outputs]`.
+- **Rolling Forecast**
+  - A post-validation rolling forecast is produced using `timeseries_process1_Pre` on the tail of the training data.
+  - All predicted time steps are retained in the output matrix `Yhat_fwd [steps × outputs]`.
 
 ## V. CHMB-Borg (for NbS optimization)
 
