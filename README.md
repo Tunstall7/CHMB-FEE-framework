@@ -32,8 +32,8 @@ Data and codes for "A selection framework for nature-based solutions based on hy
 - `runHMS` — executes HEC-HMS from the command line.  
 - `genPyScript` — generates a Jython extraction script for HEC-DSSVue.  
 - `runPyScript` — executes HEC-DSSVue to export the simulated flow time series.  
-- `extractSim` — parses the exported file and returns the flow vector.  
-  All six steps are called automatically by `runModel`. You only need to call one function.
+- `extractSim` — parses the exported file and returns the flow vector.
+All six steps are called automatically by `runModel`. You only need to call one function.
 
 ### (iii) Configuration
   Before first use, update the path constants inside each function to match your local environment:  
