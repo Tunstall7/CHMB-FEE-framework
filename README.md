@@ -48,14 +48,14 @@ Data and codes for "A selection framework for nature-based solutions based on hy
 ## III. CHMB
 
 ### (i) Overview
-  This is a MATLAB script that automates the full pipeline of an LSTM-based time series forecasting model, from raw data ingestion through hyperparameter optimization to final prediction. The model uses Bayesian Optimization to automatically tune key network hyperparameters, eliminating the need for manual search. It is designed to serve as a self-contained forecasting engine that can be embedded in any scenario-analysis or sensitivity-study loop, making it suitable for tasks such as streamflow prediction, load forecasting, and multi-step time series regression.
+  This is a MATLAB script that automates the full pipeline of an LSTM-based time series forecasting model, from raw data ingestion through hyperparameter optimization to final prediction. The model uses Bayesian Optimization to automatically tune key network hyperparameters, eliminating the need for grid search. It is designed to serve as a self-contained forecasting engine that can be embedded in any scenario-analysis or sensitivity-study loop, making it suitable for tasks such as streamflow prediction, load forecasting, and multi-step time series regression.
 
 ### (ii) Workflow
   Calling `runModel(par)` triggers the following sequential pipeline:
 
 - **Data Ingestion and Preprocessing**
   - Column-type detection: The first data row is inspected to classify each column as categorical (character) or numeric.
-  - Mixed datasets are supported. Label encoding: Each unique string category is assigned a stable integer index using `unique` + `ismember`, producing a numeric matrix compatible with the network input.
+  - Label encoding: Each unique string category is assigned a stable integer index using `unique` + `ismember`, producing a numeric matrix compatible with the network input.
   - NaN interpolation: Missing values are filled via `interp1(..., 'spline')` so that no sample is discarded.
 
 - **Feature Engineering**
@@ -63,11 +63,11 @@ Data and codes for "A selection framework for nature-based solutions based on hy
   -   The number of input dimensions equals `n_feat × n_series`; the number of output dimensions is controlled by `cfg.list`.
 
 - **Dataset Partitioning and Normalization**
-  - Samples are split chronologically into train / validation / test according to `cfg.split` ratios (no shuffling, preserving temporal order). Z-score statistics (`mx`, `sx`, `my`, `sy`) are computed exclusively on the training partition and applied to all three splits to prevent data leakage.
+  - Samples are split chronologically into train / validation / test according to `cfg.split` ratios (no shuffling, preserving temporal order).
+  - Z-score statistics (`mx`, `sx`, `my`, `sy`) are computed exclusively on the training partition and applied to all three splits to prevent data leakage.
   - The normalized matrices are converted to LSTM-compatible sequence cell arrays via the utility function `mat2seq`.
 
 - **Bayesian Hyperparameter Optimization**
-  - Five hyperparameters are jointly optimized: `NumOfLayer`, `NumOfUnits`, `isUseBiLSTMLayer`, `InitialLearnRate`, `L2Regularization`.
   - The optimizer is given a wall-clock budget of 14 hours and a maximum of `cfg.n_bo` iterations. The best configuration minimizes validation loss.
   - This is handled entirely by `OptimizeBayeLSTMS_and_CNNS1`.
 
@@ -89,8 +89,8 @@ Data and codes for "A selection framework for nature-based solutions based on hy
 
 - **Request Access**
   - Visit [http://borgmoea.org/](http://borgmoea.org/)
-  - Fill out the registration form in the red-bordered area
-  - Check your email (including spam folder) for the invitation link within 3 business days
+  - Click 'Request Access - Google Form' to fill out the application
+  - Check your email (including spam folder) for the invitation link
   - Click the link in the email to accept the invitation
 
 - **Download Source Code**
@@ -138,18 +138,22 @@ Once successfully integrated, you can combine **Borg MOEA** with the **CHMB mode
 - **Usage Example**
   ```matlab
   clear; close all; clc;
+  
   %% 1. Problem Setup
   % Load CHMB scenario parameters
-  config = loadCHMBConfig('scenario_2050_baseline');
+  config = loadCHMBConfig('scenario_A');
+  
   % Define decision variables (NbS intervention intensities)
   % Example: [reforestation_area, wetland_restoration, urban_greening, 
   %           sustainable_agriculture, forest_management, coastal_protection]
   numVars = 6;
   numObjs = 3;
-  numConstr = 2; 
+  numConstr = 2;
+  
   %% 2. Bounds Definition
   lb = zeros(1, numVars);  % Minimum intervention (0%)
   ub = config.maxIntervention;  % Maximum feasible intervention per zone
+  
   %% 3. BORG Configuration
   % Epsilon values control solution granularity (tune based on objective scales)
   epsilon = [0.5;
@@ -161,8 +165,10 @@ Once successfully integrated, you can combine **Borg MOEA** with the **CHMB mode
             'initialization.mode', 'latinHypercube', ...
             'restart.mode', 'adaptive', ...
             'feedback.interval', 1000};
+  
   %% 4. Objective Function Wrapper
   objFunc = @(vars) evaluateCHMB_NbS(vars, config);
+  
   %% 5. Execute Optimization
   fprintf('Starting CHMB-NbS optimization...\n');
   [optimalVars, optimalObjs, metadata] = borg(numVars, numObjs, numConstr, ...
