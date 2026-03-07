@@ -83,7 +83,7 @@ Data and codes for "A selection framework for nature-based solutions based on hy
   - A post-validation rolling forecast is produced using `timeseries_process1_Pre` on the tail of the training data.
   - All predicted time steps are retained in the output matrix `Yhat_fwd [steps × outputs]`.
 
-## V. CHMB-Borg (for NbS optimization)
+## IV. CHMB-Borg (for NbS optimization)
 
 ### (i) The usage instructions for Borg in MATLAB
 
